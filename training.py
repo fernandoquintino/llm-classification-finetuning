@@ -1,4 +1,5 @@
 import copy
+import random
 
 import mlflow
 import torch
@@ -497,3 +498,23 @@ def train_classifier_model(
         "best_model": best_model,
         "best_loss": best_loss,
     }
+
+def set_seed(seed: int) -> torch.Generator:
+    """
+    Seeds Python's random and PyTorch (CPU, CUDA, MPS) for
+    reproducibility. Seeds global state, so call it before each
+    training run.
+
+    Args:
+        seed: The integer to seed.
+
+    Returns:
+        A seeded generator. Pass it to DataLoader(generator=...) to make
+        shuffling and the worker's resposne swaps reproducible.
+    """
+    random.seed(seed) # Used to permute responses.
+    torch.manual_seed(seed) # Used to initialize weights and for dropout
+    torch.cuda.manual_seed_all(seed) # Same as above but for GPU
+    torch.mps.manual_seed(seed) # Same as above but for MPS
+    generator = torch.Generator().manual_seed(seed)
+    return generator
