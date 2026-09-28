@@ -1,5 +1,6 @@
 import copy
 import random
+import time
 
 import mlflow
 import torch
@@ -65,6 +66,7 @@ def train_epoch(
 
     return epoch_loss, epoch_acc
 
+
 def validate_epoch(
         model: PreferenceModel,
         loader: DataLoader,
@@ -113,6 +115,7 @@ def validate_epoch(
     epoch_acc = (correct / total) * 100
 
     return epoch_loss, epoch_acc
+
 
 def train_model(
         model: PreferenceModel,
@@ -255,6 +258,7 @@ def train_model(
         "best_loss": best_loss,
     }
 
+
 def train_classifier_epoch(
     model: DeepPreferenceClassifier,
     loader: DataLoader,
@@ -310,6 +314,7 @@ def train_classifier_epoch(
 
     return epoch_loss, epoch_acc
 
+
 def validate_classifier_epoch(
     model: DeepPreferenceClassifier,
     loader: DataLoader,
@@ -357,6 +362,7 @@ def validate_classifier_epoch(
     epoch_acc = (correct / total) * 100
 
     return epoch_loss, epoch_acc
+
 
 def train_classifier_model(
     model: DeepPreferenceClassifier,
@@ -499,6 +505,7 @@ def train_classifier_model(
         "best_loss": best_loss,
     }
 
+
 def set_seed(seed: int) -> torch.Generator:
     """
     Seeds Python's random and PyTorch (CPU, CUDA, MPS) for
@@ -510,7 +517,7 @@ def set_seed(seed: int) -> torch.Generator:
 
     Returns:
         A seeded generator. Pass it to DataLoader(generator=...) to make
-        shuffling and the worker's resposne swaps reproducible.
+        shuffling and the worker's response swaps reproducible.
     """
     random.seed(seed) # Used to permute responses.
     torch.manual_seed(seed) # Used to initialize weights and for dropout
@@ -518,3 +525,38 @@ def set_seed(seed: int) -> torch.Generator:
     torch.mps.manual_seed(seed) # Same as above but for MPS
     generator = torch.Generator().manual_seed(seed)
     return generator
+
+
+def tracking_start() -> float:
+    """
+    Resets cuda peak memory stats and starts a timer.
+
+    Resets PyTorch's peak memory stats for all GPUs and returns the
+    time so that when tracking_stop() is called, the peak allocated
+    memory and execution time can be reported.
+
+    Returns:
+        float: The current time.
+    """
+    for i in range(torch.cuda.device_count()):
+        torch.cuda.reset_peak_memory_stats(device=i)
+    return time.perf_counter()
+
+def tracking_stop(start: float) -> None:
+    """
+    Prints peak memory stats on GPUs and duration of the execution.
+
+    Reports PyTorch's peak allocated memory per GPU for machines with
+    CUDA.
+
+    Args:
+        start: The time the execution began from tracking_start().
+    """
+    elapsed = time.perf_counter() - start
+    print(f"Duration of Execution: {elapsed / 60:.1f} minutes")
+    for i in range(torch.cuda.device_count()):
+        try:
+            peak = torch.cuda.max_memory_allocated(device=i) / 1e9
+            print(f"GPU {i} peak memory: {peak:.2f} GB")
+        except RuntimeError as e:
+            print(f"Could not read memory for GPU {i}: {e}")
