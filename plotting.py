@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.metrics import ConfusionMatrixDisplay
 
 
 def plot_results(results: dict) -> None:
@@ -56,4 +58,28 @@ def plot_results(results: dict) -> None:
     ax.set_title("Accuracy per Epoch")
     ax.legend()
     ax.grid(alpha=0.3)
+    plt.show()
+
+
+def plot_confusion_matrix(
+        all_labels: np.ndarray,
+        all_preds: np.ndarray,
+        display_labels: list[str],
+    ) -> None:
+    """Plots the confusion matrix.
+
+    Args:
+        all_labels: 1-d array containing the labels.
+        all_preds: 1-d array containing the class predictions.
+            display_labels: A list of strings containing the class names.
+    """
+    fig, ax = plt.subplots(figsize=(6,6))
+    ConfusionMatrixDisplay.from_predictions(
+        all_labels,
+        all_preds,
+        display_labels=display_labels,
+        cmap="Blues",
+        ax=ax
+    )
+    ax.set_title("Confusion Matrix")
     plt.show()

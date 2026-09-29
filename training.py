@@ -1,8 +1,10 @@
 import copy
+import gc
 import random
 import time
 
 import mlflow
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -560,3 +562,71 @@ def tracking_stop(start: float) -> None:
             print(f"GPU {i} peak memory: {peak:.2f} GB")
         except RuntimeError as e:
             print(f"Could not read memory for GPU {i}: {e}")
+
+
+def evaluate_performance(
+        model: PreferenceModel,
+        loader: DataLoader,
+        device: torch.device,
+        loss: nn.Module,
+    ) -> tuple[np.ndarray, np.ndarray, float, float]:
+    """Evaluates performance.
+
+    Returns the labels with their predictions and the epoch loss and
+    accuracy.
+
+    Args:
+        model: The model that takes prompt/response_0/response_1 and its
+            mask and outputs the logits.
+        loader: The data loader for CrossEncoderDataset.
+        device: The device to process the calculations (e.g., "cuda").
+        loss: The loss function.
+
+    Returns:
+        all_labels: 1-d array containing the labels.
+        all_preds: 1-d array containing the class predictions.
+        epoch_loss: The average loss for the epoch.
+        epoch_acc: The accuracy for the epoch.
+    """
+    all_labels = []
+    all_preds = []
+    running_loss = 0.0
+    correct = 0
+    total = 0
+
+    gc.collect()
+    if device.type == "cuda":
+        torch.cuda.empty_cache()
+    elif device.type == "mps":
+        torch.mps.empty_cache()
+
+    model = model.to(device)
+    model.eval()
+    with torch.no_grad():
+        for batch in tqdm(loader):
+            batch = {k: v.to(device) for k, v in batch.items()}
+
+            with torch.autocast(device_type=device.type, dtype=torch.float16):
+                output = model(
+                    batch["input_ids"],
+                    batch["attention_mask"],
+                )
+                batch_loss = loss(output, batch["label"])
+
+            # Since last batch may be a different size, we multiply each
+            # batch loss by the batch size to get a sum, so the final
+            # division by total averages correctly.
+            running_loss += batch_loss.item() * batch["label"].size(0)
+            predicted = torch.argmax(output, 1)
+            total += batch["label"].size(0)
+            correct += (predicted == batch["label"]).sum().item()
+
+            all_preds.append(predicted.cpu())
+            all_labels.append(batch["label"].cpu())
+
+    epoch_loss = running_loss / total
+    epoch_acc = (correct / total) * 100
+    all_preds = torch.cat(all_preds).numpy()
+    all_labels = torch.cat(all_labels).numpy()
+
+    return all_labels, all_preds, epoch_loss, epoch_acc
