@@ -1,3 +1,14 @@
+"""Custom datasets and functions for handling data.
+
+Classes:
+    CrossEncoderDataset: A custom Dataset for the cross-encoder.
+    EncodedPreferenceDataset: A custom Dataset for classifier-only
+        training.
+Functions:
+    collate_cross_encoder: A custom collate function for
+        CrossEncoderDataset.
+"""
+
 import random
 
 import numpy as np
@@ -5,12 +16,15 @@ import torch
 from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizerBase
 
+
 class CrossEncoderDataset(Dataset):
+    """A custom Dataset for the cross-encoder.
+
+    Encodes prompt, response_a, and response_b as one input (and swaps
+    the responses with the given probability):
+    [CLS] prompt [SEP] response_0 [SEP] response_1 [SEP]
     """
-    A custom Dataset for the cross-encoder. Encodes prompt, response_a,
-    and response_b as one input (and swaps the responses with the given
-    probability): [CLS] prompt [SEP] response_0 [SEP] response_1 [SEP]
-    """
+
     def __init__(
             self,
             prompts: list[str],
@@ -22,8 +36,7 @@ class CrossEncoderDataset(Dataset):
             response_max_len: int = 239,
             prob: float = 0.5,
     ) -> None:
-        """
-        Initializes the dataset.
+        """Initializes the dataset.
 
         Args:
             prompts: A list of strings containing the prompts.
@@ -53,13 +66,12 @@ class CrossEncoderDataset(Dataset):
         self.prob = prob
 
     def __len__(self) -> int:
-        """
-        Returns the number of samples in the dataset.
-        """
+        """Returns the number of samples in the dataset."""
         return len(self.prompts)
 
     def __getitem__(self, idx: int) -> dict:
-        """
+        """Retrieves concatenated input.
+
         Builds one cross-encoder sequence: [CLS] prompt [SEP] response_0
         [SEP] response_1 [SEP].
 
@@ -126,11 +138,13 @@ class CrossEncoderDataset(Dataset):
             "idx": idx,
         }
 
+
 def collate_cross_encoder(
         batch: list[dict],
         tokenizer: PreTrainedTokenizerBase,
 ) -> dict:
-    """
+    """A custom collate function for CrossEncoderDataset.
+
     Pads a batch of CrossEncoderDataset samples to the batch's own
     longest sequence, instead of a fixed length.
 
@@ -169,19 +183,21 @@ def collate_cross_encoder(
         "idx": idx,
     }
 
+
 class EncodedPreferenceDataset(Dataset):
+    """A custom Dataset for classifier-only training.
+
+    Handles pooled encoded input prompts/response_0/response_1, and
+    preference labels.
     """
-    A custom Dataset for classifier-only training. Handles pooled
-    encoded input prompts/response_0/response_1, and preference labels.
-    """
+
     def __init__(
             self,
             encoded: torch.Tensor,
             labels: torch.Tensor,
             indices: np.ndarray,
     ) -> None:
-        """
-        Initializes the dataset.
+        """Initializes the dataset.
 
         Args:
             encoded: The pooled [CLS] embedding from the encoder's last
@@ -196,18 +212,15 @@ class EncodedPreferenceDataset(Dataset):
                 precomputed tensors, e.g. train_df.index.values.
         """
         self.indices = indices
-        self.encoded= encoded
+        self.encoded = encoded
         self.labels = labels
 
     def __len__(self) -> int:
-        """
-        Returns the number of samples in the dataset.
-        """
+        """Returns the number of samples in the dataset."""
         return len(self.indices)
 
     def __getitem__(self, idx: int) -> dict:
-        """
-        Retrieves one sample.
+        """Retrieves one sample.
 
         Args:
             idx: Index of the sample to retrieve.
