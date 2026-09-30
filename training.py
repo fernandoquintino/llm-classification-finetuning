@@ -1,3 +1,20 @@
+"""Functions for training or evaluation of models.
+
+Functions:
+    train_epoch: Trains the model for one epoch.
+    validate_epoch: Validates the model for one epoch.
+    train_model: Trains the model for the specified epochs.
+    train_classifier_epoch: Trains the classifier for one epoch.
+    validate_classifier_epoch: Validates the classifier for one epoch.
+    train_classifier_model: Trains the classifier for the specified
+        epochs.
+    set_seed: Seeds Python's random and PyTorch.
+    tracking_start: Resets cuda peak memory stats and starts a timer.
+    tracking_stop: Prints peak memory stats on GPUs and duration of the
+        execution.
+    evaluate_performance: Evaluates performance.
+"""
+
 import copy
 import gc
 import random
@@ -10,22 +27,23 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
-from models import PreferenceModel, DeepPreferenceClassifier
+from models import DeepPreferenceClassifier, PreferenceModel
+
 
 def train_epoch(
-        model: PreferenceModel,
-        loader: DataLoader,
-        device: torch.device,
-        optimizer: torch.optim.Optimizer,
-        loss: nn.Module,
-        scaler: torch.amp.GradScaler
+    model: PreferenceModel,
+    loader: DataLoader,
+    device: torch.device,
+    optimizer: torch.optim.Optimizer,
+    loss: nn.Module,
+    scaler: torch.amp.GradScaler
 ) -> tuple[float, float]:
-    """
-    Trains the model for one epoch.
+    """Trains the model for one epoch.
 
     Args:
-        model: The model that takes prompt/response_0/response_1 and its
-            mask and outputs the logits.
+        model: The model that takes the concatenated
+            prompt/response_0/response_1 sequence and its mask and then
+            outputs the logits.
         loader: The data loader for CrossEncoderDataset.
         device: The device to process the calculations (e.g., "cuda").
         optimizer: The optimizer.
@@ -34,7 +52,7 @@ def train_epoch(
 
     Returns:
         epoch_loss: The average loss for the epoch.
-        epoch_acc: The average accuracy for the epoch.
+        epoch_acc: The accuracy for the epoch.
     """
     running_loss = 0.0
     correct = 0
@@ -70,17 +88,17 @@ def train_epoch(
 
 
 def validate_epoch(
-        model: PreferenceModel,
-        loader: DataLoader,
-        device: torch.device,
-        loss: nn.Module,
-    ) -> tuple[float, float]:
-    """
-    Validates the model for one epoch.
+    model: PreferenceModel,
+    loader: DataLoader,
+    device: torch.device,
+    loss: nn.Module,
+) -> tuple[float, float]:
+    """Validates the model for one epoch.
 
     Args:
-        model: The model that takes prompt/response_0/response_1 and its
-            mask and outputs the logits.
+        model: The model that takes the concatenated
+            prompt/response_0/response_1 sequence and its mask and then
+            outputs the logits.
         loader: The data loader for CrossEncoderDataset.
         device: The device to process the calculations (e.g., "cuda").
         loss: The loss function.
@@ -120,24 +138,25 @@ def validate_epoch(
 
 
 def train_model(
-        model: PreferenceModel,
-        train_loader: DataLoader,
-        val_loader: DataLoader,
-        device: torch.device,
-        optimizer: torch.optim.Optimizer,
-        loss: nn.Module,
-        num_epochs: int,
-        scaler: torch.amp.GradScaler,
-        run_name: str | None = None,
-        scheduler: torch.optim.lr_scheduler.ReduceLROnPlateau | None = None,
-        ) -> dict:
-    """
-    Trains the model for the specified epochs. mlflow is used to track
-    the runs.
+    model: PreferenceModel,
+    train_loader: DataLoader,
+    val_loader: DataLoader,
+    device: torch.device,
+    optimizer: torch.optim.Optimizer,
+    loss: nn.Module,
+    num_epochs: int,
+    scaler: torch.amp.GradScaler,
+    run_name: str | None = None,
+    scheduler: torch.optim.lr_scheduler.ReduceLROnPlateau | None = None,
+) -> dict:
+    """Trains the model for the specified epochs.
+
+    mlflow is used to track the runs.
 
     Args:
-        model: The model that takes prompt/response_0/response_1 and its
-            mask and outputs the logits.
+        model: The model that takes the concatenated
+            prompt/response_0/response_1 sequence and its mask and then
+            outputs the logits.
         train_loader: The train loader for CrossEncoderDataset.
         val_loader: The val loader for CrossEncoderDataset.
         device: The device to process the calculations (e.g., "cuda").
@@ -269,8 +288,7 @@ def train_classifier_epoch(
     loss: nn.Module,
     scaler: torch.amp.GradScaler
 ) -> tuple[float, float]:
-    """
-    Trains the model for one epoch.
+    """Trains the classifier for one epoch.
 
     Args:
         model: The classifier that takes encoded input and outputs the
@@ -283,7 +301,7 @@ def train_classifier_epoch(
 
     Returns:
         epoch_loss: The average loss for the epoch.
-        epoch_acc: The average accuracy for the epoch.
+        epoch_acc: The accuracy for the epoch.
     """
     running_loss = 0.0
     correct = 0
@@ -323,8 +341,7 @@ def validate_classifier_epoch(
     device: torch.device,
     loss: nn.Module,
 ) -> tuple[float, float]:
-    """
-    Validates the model for one epoch.
+    """Validates the classifier for one epoch.
 
     Args:
         model: The classifier that takes encoded input and outputs the
@@ -335,7 +352,7 @@ def validate_classifier_epoch(
 
     Returns:
         epoch_loss: The average loss for the epoch.
-        epoch_acc: The average accuracy for the epoch.
+        epoch_acc: The accuracy for the epoch.
     """
     running_loss = 0.0
     correct = 0
@@ -378,9 +395,9 @@ def train_classifier_model(
     run_name: str | None = None,
     scheduler: torch.optim.lr_scheduler.ReduceLROnPlateau | None = None,
     ) -> dict:
-    """
-    Trains the model for the specified epochs. mlflow is used to track
-    the runs.
+    """Trains the classifier for the specified epochs.
+
+    mlflow is used to track the runs.
 
     Args:
         model: The classifier that takes encoded input and outputs the
@@ -509,7 +526,8 @@ def train_classifier_model(
 
 
 def set_seed(seed: int) -> torch.Generator:
-    """
+    """Seeds Python's random and PyTorch.
+
     Seeds Python's random and PyTorch (CPU, CUDA, MPS) for
     reproducibility. Seeds global state, so call it before each
     training run.
@@ -530,8 +548,7 @@ def set_seed(seed: int) -> torch.Generator:
 
 
 def tracking_start() -> float:
-    """
-    Resets cuda peak memory stats and starts a timer.
+    """Starts tracking peak GPU memory and starts a timer.
 
     Resets PyTorch's peak memory stats for all GPUs and returns the
     time so that when tracking_stop() is called, the peak allocated
@@ -544,9 +561,9 @@ def tracking_start() -> float:
         torch.cuda.reset_peak_memory_stats(device=i)
     return time.perf_counter()
 
+
 def tracking_stop(start: float) -> None:
-    """
-    Prints peak memory stats on GPUs and duration of the execution.
+    """Prints peak memory stats on GPUs and duration of the execution.
 
     Reports PyTorch's peak allocated memory per GPU for machines with
     CUDA.
@@ -565,19 +582,20 @@ def tracking_stop(start: float) -> None:
 
 
 def evaluate_performance(
-        model: PreferenceModel,
-        loader: DataLoader,
-        device: torch.device,
-        loss: nn.Module,
-    ) -> tuple[np.ndarray, np.ndarray, float, float]:
+    model: PreferenceModel,
+    loader: DataLoader,
+    device: torch.device,
+    loss: nn.Module,
+) -> tuple[np.ndarray, np.ndarray, float, float]:
     """Evaluates performance.
 
     Returns the labels with their predictions and the epoch loss and
     accuracy.
 
     Args:
-        model: The model that takes prompt/response_0/response_1 and its
-            mask and outputs the logits.
+        model: The model that takes the concatenated
+            prompt/response_0/response_1 sequence and its mask and then
+            outputs the logits.
         loader: The data loader for CrossEncoderDataset.
         device: The device to process the calculations (e.g., "cuda").
         loss: The loss function.
