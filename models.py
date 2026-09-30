@@ -33,7 +33,7 @@ class DeepPreferenceClassifier(nn.Module):
 
         Args:
             input_dim: The dimension of the pooled input vector.
-            hidden_state: The hidden dimension for the residual block.
+            hidden_state: The hidden dimension for the residual blocks.
             num_classes: The number of classes.
             num_blocks: The number of residual blocks.
             dropout: Dropout probability used throughout the head.
@@ -79,11 +79,9 @@ class DeepPreferenceClassifier(nn.Module):
 class PreferenceModel(nn.Module):
     """Full end-to-end model that wraps the encoder and classifier.
 
-    A model that takes the encoder model and the classifier
-    model to create the full end-to-end model. The model first encodes
-    prompt/response_0/response_1 through the encoder model in one
-    pass. The output is fed through the classifier model to predict the
-    user preference:
+    The model first encodes prompt/response_0/response_1 through the
+    encoder in one pass. The output is fed through the classifier head
+    to predict the user preference:
         - 0: response_0 preferred
         - 1: response_1 preferred
         - 2: tie
