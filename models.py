@@ -1,14 +1,24 @@
+"""Custom models for cross-encoder preference classification.
+
+Classes:
+    DeepPreferenceClassifier: Classifier head for
+        cross-encoder preference task.
+    PreferenceModel: Full end-to-end model that wraps the
+        encoder and classifier.
+"""
+
 import torch
 import torch.nn as nn
 
 
 class DeepPreferenceClassifier(nn.Module):
-    """
+    """Classifier head for cross-encoder preference task.
+
     Classification head that takes pooled encoder representation and
     predicts which response is preferred:
-        - 0 response_0 preferred
-        - 1 response_1 preferred
-        - 2 tie
+        - 0: response_0 preferred
+        - 1: response_1 preferred
+        - 2: tie
     """
 
     def __init__(
@@ -19,8 +29,7 @@ class DeepPreferenceClassifier(nn.Module):
             num_blocks: int = 2,
             dropout: float = 0.1,
     ) -> None:
-        """
-        Initializes the classifier.
+        """Initializes the classifier.
 
         Args:
             input_dim: The dimension of the pooled input vector.
@@ -47,8 +56,7 @@ class DeepPreferenceClassifier(nn.Module):
         self.fc2 = nn.Linear(hidden_state, num_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Executes the forward pass to generate classification logits.
+        """Executes the forward pass to generate classification logits.
 
         Args:
             x: A pooled representation, shape (batch_size, input_dim).
@@ -69,14 +77,15 @@ class DeepPreferenceClassifier(nn.Module):
 
 
 class PreferenceModel(nn.Module):
-    """
+    """Full end-to-end model that wraps the encoder and classifier.
+
     A model that takes the encoder model and the classifier
     model to create the full end-to-end model. The model first encodes
     prompt/response_0/response_1 through the encoder model in one
     pass. The output is fed through the classifier model to predict the
     user preference:
-        - 0: response_0 is preferred
-        - 1: response_1 is preferred
+        - 0: response_0 preferred
+        - 1: response_1 preferred
         - 2: tie
     """
 
@@ -85,17 +94,14 @@ class PreferenceModel(nn.Module):
             model_encoder: nn.Module,
             model_classifier: DeepPreferenceClassifier,
     ) -> None:
-        """
-        Initializes the model with the model encoder and model
-        classifier.
+        """Initializes the model with the encoder and classifier.
 
         Args:
-            model_encoder (nn.Module): A pretrained encoder model
+            model_encoder: A pretrained encoder model
                 (e.g. DebertaV2Model) that outputs last_hidden_state
                 given input_ids and attention_mask.
-            model_classifier (DeepPreferenceClassifier): The
-                classification head that takes encoder outputs and
-                predicts preference.
+            model_classifier: The classification head that takes encoder
+                outputs and predicts preference.
         """
         super().__init__()
         self.model_encoder = model_encoder
@@ -106,12 +112,14 @@ class PreferenceModel(nn.Module):
             input_ids: torch.Tensor,
             attention_mask: torch.Tensor,
     ) -> torch.Tensor:
-        """
-        Executes the forward pass of the model.
+        """Executes the forward pass of the model.
 
         Args:
-            input_ids: The input_ids.
-            attention_mask: The attention mask for the input_ids.
+            input_ids: Token ids for the batch, shape
+                (batch_size, seq_len).
+            attention_mask: Attention mask for the input_ids, shape
+                (batch_size, seq_len), 1 for real tokens and 0 for
+                padding.
 
         Returns:
             Tensor: Classifier logits.
@@ -119,7 +127,7 @@ class PreferenceModel(nn.Module):
         output = self.model_encoder(
             input_ids=input_ids,
             attention_mask=attention_mask
-        ).last_hidden_state[:,0,:]
+        ).last_hidden_state[:, 0, :]
         logits = self.model_classifier(output)
 
         return logits
