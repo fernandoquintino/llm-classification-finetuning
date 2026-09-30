@@ -1,3 +1,14 @@
+"""Functions for text manipulation and statistics on texts.
+
+Functions:
+    parse_conversation: Parses a stringified list of conversation turns.
+    format_conversation: Joins conversation turns into one string for
+        tokenization.
+    token_lengths: Computes how many tokens are in each text.
+    summarize: Prints the summary of the token counts for the given
+        category.
+"""
+
 import ast
 
 import numpy as np
@@ -5,12 +16,12 @@ from transformers import PreTrainedTokenizerBase
 
 
 def parse_conversation(cell: str) -> list[str]:
-    """
-    Parses a stringified list of conversation turns.
+    """Parses a stringified list of conversation turns.
 
     Args:
         cell: A raw CSV cell expected to look like a Python list
-        literal (e.g., '["turn1", "turn2"]').
+            literal (e.g., '["turn1", "turn2"]').
+
     Returns:
         The parsed list of turns (e.g., ["turn1", "turn2"]). If parse
         fails, it returns [cell], where cell is the raw string.
@@ -20,39 +31,41 @@ def parse_conversation(cell: str) -> list[str]:
     except (ValueError, SyntaxError, TypeError):
         return [cell]
 
+
 def format_conversation(turns: list[str]) -> str:
-    """
-    Joins conversation turns into one string for tokenization.
+    """Joins conversation turns into one string for tokenization.
 
     Args:
         turns: A list of conversation turns to be joined.
+
     Returns:
         The turns joined with a blank line between each. Any leftover
-        JSON-style escaping slashes cleaned up (backslash-escaped
+        JSON-style escaping slashes are cleaned up (backslash-escaped
         slashes, unpaired surrogate characters).
     """
     text = "\n\n".join(turns).replace("\\/", "/")
     return text.encode("utf", errors="ignore").decode("utf-8")
 
+
 def token_lengths(
         texts: list[str],
         tokenizer: PreTrainedTokenizerBase
 ) -> list[int]:
-    """
-    Computes how many tokens are in each text.
+    """Computes how many tokens are in each text.
 
     Args:
         texts: A list of texts.
         tokenizer: The tokenizer to be used for counting.
+
     Returns:
         A list of the number of tokens per text.
     """
     encoded = tokenizer(texts, add_special_tokens=False)
     return [len(ids) for ids in encoded["input_ids"]]
 
+
 def summarize(name: str, lengths: list[int]) -> None:
-    """
-    Prints the summary of the token counts for the given category.
+    """Prints the summary of the token counts for the given category.
 
     Args:
         name: Name of category.
