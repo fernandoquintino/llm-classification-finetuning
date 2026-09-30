@@ -1,12 +1,17 @@
+"""A collection of custom plotting functions.
+
+Functions:
+    plot_results: Plots graphs of loss and accuracy during training.
+    plot_confusion_matrix: Plots the confusion matrix.
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import ConfusionMatrixDisplay
 
 
 def plot_results(results: dict) -> None:
-    """
-    Generates two plots (loss and accuracy history during training) for
-    train/val sets.
+    """Plots graphs of loss and accuracy during training.
 
     Args:
         results: The dictionary returned from train_model() or
@@ -71,9 +76,9 @@ def plot_confusion_matrix(
     Args:
         all_labels: 1-d array containing the labels.
         all_preds: 1-d array containing the class predictions.
-            display_labels: A list of strings containing the class names.
+        display_labels: A list of strings containing the class names.
     """
-    fig, ax = plt.subplots(figsize=(6,6))
+    fig, ax = plt.subplots(figsize=(6, 6))
     ConfusionMatrixDisplay.from_predictions(
         all_labels,
         all_preds,
