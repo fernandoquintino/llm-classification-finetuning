@@ -25,7 +25,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from tqdm.auto import tqdm
+from tqdm import tqdm
 
 from models import DeepPreferenceClassifier, PreferenceModel
 
@@ -59,7 +59,7 @@ def train_epoch(
     total = 0
 
     model.train()
-    for batch in tqdm(loader, leave=False):
+    for batch in tqdm(loader, leave=False, disable=True):
         batch = {k: v.to(device) for k, v in batch.items()}
 
         optimizer.zero_grad()
@@ -113,7 +113,7 @@ def validate_epoch(
 
     model.eval()
     with torch.no_grad():
-        for batch in tqdm(loader, leave=False):
+        for batch in tqdm(loader, leave=False, disable=True):
             batch = {k: v.to(device) for k, v in batch.items()}
 
             with torch.autocast(device_type=device.type, dtype=torch.float16):
@@ -308,7 +308,7 @@ def train_classifier_epoch(
     total = 0
 
     model.train()
-    for batch in tqdm(loader, leave=False):
+    for batch in tqdm(loader, leave=False, disable=True):
         batch = {k: v.to(device) for k, v in batch.items()}
 
         optimizer.zero_grad()
@@ -360,7 +360,7 @@ def validate_classifier_epoch(
 
     model.eval()
     with torch.no_grad():
-        for batch in tqdm(loader, leave=False):
+        for batch in tqdm(loader, leave=False, disable=True):
             batch = {k: v.to(device) for k, v in batch.items()}
 
             with torch.autocast(device_type=device.type, dtype=torch.float16):
