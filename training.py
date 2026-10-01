@@ -31,12 +31,12 @@ from models import DeepPreferenceClassifier, PreferenceModel
 
 
 def train_epoch(
-    model: PreferenceModel,
-    loader: DataLoader,
-    device: torch.device,
-    optimizer: torch.optim.Optimizer,
-    loss: nn.Module,
-    scaler: torch.amp.GradScaler
+        model: PreferenceModel,
+        loader: DataLoader,
+        device: torch.device,
+        optimizer: torch.optim.Optimizer,
+        loss: nn.Module,
+        scaler: torch.amp.GradScaler
 ) -> tuple[float, float]:
     """Trains the model for one epoch.
 
@@ -88,10 +88,10 @@ def train_epoch(
 
 
 def validate_epoch(
-    model: PreferenceModel,
-    loader: DataLoader,
-    device: torch.device,
-    loss: nn.Module,
+        model: PreferenceModel,
+        loader: DataLoader,
+        device: torch.device,
+        loss: nn.Module,
 ) -> tuple[float, float]:
     """Validates the model for one epoch.
 
@@ -105,7 +105,7 @@ def validate_epoch(
 
     Returns:
         epoch_loss: The average loss for the epoch.
-        epoch_acc: The average accuracy for the epoch.
+        epoch_acc: The accuracy for the epoch.
     """
     running_loss = 0.0
     correct = 0
@@ -138,16 +138,16 @@ def validate_epoch(
 
 
 def train_model(
-    model: PreferenceModel,
-    train_loader: DataLoader,
-    val_loader: DataLoader,
-    device: torch.device,
-    optimizer: torch.optim.Optimizer,
-    loss: nn.Module,
-    num_epochs: int,
-    scaler: torch.amp.GradScaler,
-    run_name: str | None = None,
-    scheduler: torch.optim.lr_scheduler.ReduceLROnPlateau | None = None,
+        model: PreferenceModel,
+        train_loader: DataLoader,
+        val_loader: DataLoader,
+        device: torch.device,
+        optimizer: torch.optim.Optimizer,
+        loss: nn.Module,
+        num_epochs: int,
+        scaler: torch.amp.GradScaler,
+        run_name: str | None = None,
+        scheduler: torch.optim.lr_scheduler.ReduceLROnPlateau | None = None,
 ) -> dict:
     """Trains the model for the specified epochs.
 
@@ -178,8 +178,8 @@ def train_model(
                 loss per epoch.
             - acc_val_history (list[float]): The history of the val
                 accuracy per epoch.
-            - best_model (PreferenceModel): Model with best loss on the
-                validation set.
+            - best_model (PreferenceModel): The model with the best loss
+                on the validation set.
             - best_loss (float): The best loss on the validation set.
             - best_model_acc (float): The accuracy of the best_model.
     """
@@ -281,12 +281,12 @@ def train_model(
 
 
 def train_classifier_epoch(
-    model: DeepPreferenceClassifier,
-    loader: DataLoader,
-    device: torch.device,
-    optimizer: torch.optim.Optimizer,
-    loss: nn.Module,
-    scaler: torch.amp.GradScaler
+        model: DeepPreferenceClassifier,
+        loader: DataLoader,
+        device: torch.device,
+        optimizer: torch.optim.Optimizer,
+        loss: nn.Module,
+        scaler: torch.amp.GradScaler
 ) -> tuple[float, float]:
     """Trains the classifier for one epoch.
 
@@ -336,10 +336,10 @@ def train_classifier_epoch(
 
 
 def validate_classifier_epoch(
-    model: DeepPreferenceClassifier,
-    loader: DataLoader,
-    device: torch.device,
-    loss: nn.Module,
+        model: DeepPreferenceClassifier,
+        loader: DataLoader,
+        device: torch.device,
+        loss: nn.Module,
 ) -> tuple[float, float]:
     """Validates the classifier for one epoch.
 
@@ -384,17 +384,17 @@ def validate_classifier_epoch(
 
 
 def train_classifier_model(
-    model: DeepPreferenceClassifier,
-    train_loader: DataLoader,
-    val_loader: DataLoader,
-    device: torch.device,
-    optimizer: torch.optim.Optimizer,
-    loss: nn.Module,
-    num_epochs: int,
-    scaler: torch.amp.GradScaler,
-    run_name: str | None = None,
-    scheduler: torch.optim.lr_scheduler.ReduceLROnPlateau | None = None,
-    ) -> dict:
+        model: DeepPreferenceClassifier,
+        train_loader: DataLoader,
+        val_loader: DataLoader,
+        device: torch.device,
+        optimizer: torch.optim.Optimizer,
+        loss: nn.Module,
+        num_epochs: int,
+        scaler: torch.amp.GradScaler,
+        run_name: str | None = None,
+        scheduler: torch.optim.lr_scheduler.ReduceLROnPlateau | None = None,
+) -> dict:
     """Trains the classifier for the specified epochs.
 
     mlflow is used to track the runs.
@@ -423,8 +423,8 @@ def train_classifier_model(
                 loss per epoch.
             - acc_val_history (list[float]): The history of the val
                 accuracy per epoch.
-            - best_model (DeepPreferenceClassifier): Model with best
-                loss on the validation set.
+            - best_model (DeepPreferenceClassifier): The model with the
+                best loss on the validation set.
             - best_loss (float): The best loss on the validation set.
             - best_model_acc (float): The accuracy of the best_model.
     """
@@ -582,10 +582,10 @@ def tracking_stop(start: float) -> None:
 
 
 def evaluate_performance(
-    model: PreferenceModel,
-    loader: DataLoader,
-    device: torch.device,
-    loss: nn.Module,
+        model: PreferenceModel,
+        loader: DataLoader,
+        device: torch.device,
+        loss: nn.Module,
 ) -> tuple[np.ndarray, np.ndarray, float, float]:
     """Evaluates performance.
 

@@ -70,10 +70,10 @@ class CrossEncoderDataset(Dataset):
         return len(self.prompts)
 
     def __getitem__(self, idx: int) -> dict:
-        """Retrieves concatenated input.
+        """Builds concatenated input.
 
-        Builds one cross-encoder sequence: [CLS] prompt [SEP] response_0
-        [SEP] response_1 [SEP].
+        Creates one cross-encoder sequence:
+        [CLS] prompt [SEP] response_0 [SEP] response_1 [SEP].
 
         Args:
             idx: The index of the sample to retrieve.
@@ -187,8 +187,8 @@ def collate_cross_encoder(
 class EncodedPreferenceDataset(Dataset):
     """A custom Dataset for classifier-only training.
 
-    Handles pooled encoded input prompts/response_0/response_1, and
-    preference labels.
+    Handles the concatenated input, prompts/response_0/response_1 (that
+    was encoded and pooled in Stage 0), and the preference labels.
     """
 
     def __init__(
@@ -201,14 +201,14 @@ class EncodedPreferenceDataset(Dataset):
 
         Args:
             encoded: The pooled [CLS] embedding from the encoder's last
-                hidden state, summarizing the encoded:
+                hidden state, summarizing the encoded sequence:
                 [CLS] prompt [SEP] response_0 [SEP] response_1.
             labels: A tensor of integers containing the preferred
                 response.
                 - 0: response_0 preferred
                 - 1: response_1 preferred
                 - 2: tie
-            indices: Array of integer row positions into the full
+            indices: An array of integer row positions into the full
                 precomputed tensors, e.g. train_df.index.values.
         """
         self.indices = indices
@@ -223,7 +223,7 @@ class EncodedPreferenceDataset(Dataset):
         """Retrieves one sample.
 
         Args:
-            idx: Index of the sample to retrieve.
+            idx: The index of the sample to retrieve.
 
         Returns:
             dict: A dictionary containing:

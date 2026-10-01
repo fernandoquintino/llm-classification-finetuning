@@ -70,7 +70,7 @@ def plot_confusion_matrix(
         all_labels: np.ndarray,
         all_preds: np.ndarray,
         display_labels: list[str],
-    ) -> None:
+) -> None:
     """Plots the confusion matrix.
 
     Args:

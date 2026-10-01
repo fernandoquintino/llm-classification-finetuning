@@ -22,12 +22,12 @@ class DeepPreferenceClassifier(nn.Module):
     """
 
     def __init__(
-        self,
-        input_dim: int,
-        hidden_state: int = 768,
-        num_classes: int = 3,
-        num_blocks: int = 2,
-        dropout: float = 0.1,
+            self,
+            input_dim: int,
+            hidden_state: int = 768,
+            num_classes: int = 3,
+            num_blocks: int = 2,
+            dropout: float = 0.1,
     ) -> None:
         """Initializes the classifier.
 
@@ -88,9 +88,9 @@ class PreferenceModel(nn.Module):
     """
 
     def __init__(
-        self,
-        model_encoder: nn.Module,
-        model_classifier: DeepPreferenceClassifier,
+            self,
+            model_encoder: nn.Module,
+            model_classifier: DeepPreferenceClassifier,
     ) -> None:
         """Initializes the model with the encoder and classifier.
 
@@ -106,9 +106,9 @@ class PreferenceModel(nn.Module):
         self.model_classifier = model_classifier
 
     def forward(
-        self,
-        input_ids: torch.Tensor,
-        attention_mask: torch.Tensor,
+            self,
+            input_ids: torch.Tensor,
+            attention_mask: torch.Tensor,
     ) -> torch.Tensor:
         """Executes the forward pass of the model.
 

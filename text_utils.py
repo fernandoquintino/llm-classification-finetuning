@@ -1,4 +1,4 @@
-"""Functions for text manipulation and statistics on texts.
+"""Functions for text manipulation and token statistics.
 
 Functions:
     parse_conversation: Parses a stringified list of conversation turns.
@@ -68,7 +68,7 @@ def summarize(name: str, lengths: list[int]) -> None:
     """Prints the summary of the token counts for the given category.
 
     Args:
-        name: Name of category.
+        name: The name of category.
         lengths: A list of the number of tokens for the category.
     """
     arr = np.array(lengths)
