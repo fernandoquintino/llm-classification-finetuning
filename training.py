@@ -36,7 +36,9 @@ def train_epoch(
         device: torch.device,
         optimizer: torch.optim.Optimizer,
         loss: nn.Module,
-        scaler: torch.amp.GradScaler
+        scaler: torch.amp.GradScaler,
+        max_grad_norm: float | None = None,
+        warmup: torch.optim.lr_scheduler.LRScheduler | None = None,
 ) -> tuple[float, float]:
     """Trains the model for one epoch.
 
@@ -49,6 +51,10 @@ def train_epoch(
         optimizer: The optimizer.
         loss: The loss function.
         scaler: Scales the loss to prevent fp16 underflow.
+        max_grad_norm: The maximum gradient norm. Gradients are clipped
+            to max_grad_norm. Defaults to None (no clipping).
+        warmup: A scheduler that warms up the learning rate. Defaults to
+            None (no warmup).
 
     Returns:
         epoch_loss: The average loss for the epoch.
@@ -70,8 +76,14 @@ def train_epoch(
             )
             batch_loss = loss(output, batch["label"])
         scaler.scale(batch_loss).backward()
+        if max_grad_norm is not None:
+            # Unscale so norm is measured on the true gradients.
+            scaler.unscale_(optimizer)
+            nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
         scaler.step(optimizer)
         scaler.update()
+        if warmup is not None:
+            warmup.step()
 
         # Since last batch may be a different size, we multiply each
         # batch loss by the batch size to get a sum, so the final
@@ -148,6 +160,10 @@ def train_model(
         scaler: torch.amp.GradScaler,
         run_name: str | None = None,
         scheduler: torch.optim.lr_scheduler.ReduceLROnPlateau | None = None,
+        abort_epoch: int | None = None,
+        abort_min_acc: float = 0.0,
+        max_grad_norm: float | None = None,
+        warmup_steps: int = 0,
 ) -> dict:
     """Trains the model for the specified epochs.
 
@@ -167,6 +183,15 @@ def train_model(
         run_name: The name of the run. Defaults to None.
         scheduler: Updates the learning rate based upon val loss.
             Defaults to None.
+        abort_epoch: The epoch in which we check to see if the model is
+            learning. Defaults to None (no check).
+        abort_min_acc: The minimum val acc must be at abort_epoch.
+            if val acc is lower, then training is aborted.
+            Defaults to 0.0
+        max_grad_norm: The maximum gradient norm. Gradients are clipped
+            to max_grad_norm. Defaults to None (no clipping).
+        warmup_steps: The numbers of steps for the optimizer's lr to go
+            from 1% to 100%. Defaults to 0 (no warm up).
 
     Returns:
         dict: A dictionary containing:
@@ -201,6 +226,15 @@ def train_model(
             mlflow.log_param("scheduler_type", type(scheduler).__name__)
             mlflow.log_params(scheduler.state_dict())
         mlflow.log_param("model_type", type(model).__name__)
+        mlflow.log_param("max_grad_norm", max_grad_norm)
+        mlflow.log_param("warmup_steps", warmup_steps)
+        warmup = None
+        if warmup_steps > 0:
+            warmup = torch.optim.lr_scheduler.LinearLR(
+                optimizer,
+                start_factor=0.01,
+                total_iters=warmup_steps,
+            )
 
         print(f"Training on device {device} for {num_epochs} epochs:")
         model = model.to(device)
@@ -215,7 +249,9 @@ def train_model(
                 device,
                 optimizer,
                 loss,
-                scaler
+                scaler,
+                max_grad_norm,
+                warmup,
             )
             loss_train_history.append(epoch_train_loss)
             acc_train_history.append(epoch_train_acc)
@@ -260,6 +296,18 @@ def train_model(
                 f"{epoch_train_acc:.2f}% | Val loss: {epoch_val_loss:.4f} acc:"
                 f" {epoch_val_acc:.2f}%"
             )
+
+            if (
+                abort_epoch is not None
+                and epoch + 1 == abort_epoch
+                and epoch_val_acc < abort_min_acc
+            ):
+                print(
+                    f"\n--Abort training--\nVal Acc: {epoch_val_acc:.2f}\n"
+                    f"abort_min_acc: {abort_min_acc}"
+                )
+                mlflow.set_tag("abort", "true")
+                break
 
         mlflow.log_metric("best_model_val_acc", best_model_acc)
         mlflow.log_metric("best_val_loss", best_loss)
