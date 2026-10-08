@@ -25,7 +25,7 @@ A 3-block residual head maps the `[CLS]` vector to three probabilities.
 - **Position-bias augmentation:** During Stage 2, the responses (Response A and Response B) and their labels are swapped at random with probability 0.5.
 - **Split:** The dataset was split 80/10/10 and stratified into training, validation, and test sets. The test set was used only once after training to evaluate performance on unseen data.
 - **Efficiency:** fp16 mixed precision, gradient checkpointing, and data parallelism across two T4 GPUs.
-- **Tracking:** Every run is logged with MLflow.
+- **Tracking:** Every run was tracked locally with MLflow.
 
 
 ## Results
