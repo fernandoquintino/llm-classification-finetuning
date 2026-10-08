@@ -3,3 +3,34 @@
 __pycache__/
 *.pyc
 .DS_Store
+
+# Virtual environments
+.venv/
+test_env/
+
+# Model artifacts / checkpoints
+*.pt
+*.pth
+
+# MLflow tracking
+mlruns/
+mlruns_v2
+mlartifacts/
+
+# Downloaded pretrained weights (reproducible via code)
+deberta-v3-small-encoder/
+deberta-v3-small-tokenizer/
+trained_cross_encoder_models/
+
+# Data
+data/
+llm-classification-finetuning.zip
+
+# Run outputs and scratch files
+Bad runs/
+new_runs/
+*_trained_model/
+base_model_trained/
+kaggle_src/
+temp.ipynb
+test_copy.ipynb
